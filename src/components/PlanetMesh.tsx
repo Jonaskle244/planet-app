@@ -1,9 +1,10 @@
-import { useRef } from 'react'
+import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { Group, Mesh } from 'three'
 import type { PlanetData } from '../data/planets'
 import Atmosphere from './Atmosphere'
+import { createPlanetTexture, createSaturnRingTexture } from '../utils/textures'
 
 interface PlanetMeshProps {
   planet: PlanetData
@@ -13,10 +14,22 @@ interface PlanetMeshProps {
 
 const SPEED_FACTOR = 0.08
 
+function initialAngleFor(id: string) {
+  let hash = 0
+  for (const char of id) {
+    hash = (hash * 31 + char.charCodeAt(0)) % 360
+  }
+  return THREE.MathUtils.degToRad(hash)
+}
+
 export default function PlanetMesh({ planet, onSelect, isSelected }: PlanetMeshProps) {
   const orbitGroupRef = useRef<Group>(null)
   const meshRef = useRef<Mesh>(null)
-  const angleRef = useRef(Math.random() * Math.PI * 2)
+  const angleRef = useRef(initialAngleFor(planet.id))
+
+  const texture = useMemo(() => createPlanetTexture(planet.id), [planet.id])
+  const ringTexture = useMemo(() => (planet.hasRings ? createSaturnRingTexture() : null), [planet.hasRings])
+  const axialTilt = useMemo(() => THREE.MathUtils.degToRad(planet.tilt), [planet.tilt])
 
   useFrame((_, delta) => {
     angleRef.current += delta * planet.speed * SPEED_FACTOR
@@ -33,28 +46,62 @@ export default function PlanetMesh({ planet, onSelect, isSelected }: PlanetMeshP
     <>
       {/* Orbit path */}
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[planet.distance - 0.04, planet.distance + 0.04, 128]} />
-        <meshBasicMaterial color="#ffffff" transparent opacity={0.07} side={THREE.DoubleSide} />
+        <ringGeometry args={[planet.distance - 0.035, planet.distance + 0.035, 192]} />
+        <meshBasicMaterial
+          color={isSelected ? '#f7c86a' : '#c8d7e8'}
+          transparent
+          opacity={isSelected ? 0.34 : 0.13}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
       </mesh>
 
       {/* Planet at orbit position */}
       <group ref={orbitGroupRef}>
-        <mesh
-          ref={meshRef}
-          onClick={(e) => {
-            e.stopPropagation()
-            onSelect(planet)
-          }}
-        >
-          <sphereGeometry args={[planet.radius, 48, 48]} />
-          <meshStandardMaterial
-            color={planet.color}
-            roughness={planet.roughness}
-            metalness={planet.metalness}
-            emissive={planet.color}
-            emissiveIntensity={isSelected ? 0.3 : 0.05}
-          />
-        </mesh>
+        <group rotation={[0, 0, axialTilt]}>
+          <mesh
+            ref={meshRef}
+            onClick={(e) => {
+              e.stopPropagation()
+              onSelect(planet)
+            }}
+            onPointerOver={(e) => {
+              e.stopPropagation()
+              document.body.style.cursor = 'pointer'
+            }}
+            onPointerOut={() => {
+              document.body.style.cursor = ''
+            }}
+          >
+            <sphereGeometry args={[planet.radius, 72, 72]} />
+            <meshStandardMaterial
+              map={texture}
+              color="#ffffff"
+              roughness={planet.roughness}
+              metalness={planet.metalness}
+              emissive={planet.color}
+              emissiveIntensity={isSelected ? 0.09 : 0.015}
+              envMapIntensity={0.8}
+            />
+          </mesh>
+
+          {/* Saturn rings */}
+          {planet.hasRings && ringTexture && (
+            <mesh rotation={[Math.PI / 2.65, 0, 0]}>
+              <ringGeometry args={[planet.radius * 1.45, planet.radius * 2.55, 192, 10]} />
+              <meshStandardMaterial
+                map={ringTexture}
+                color="#fff2cf"
+                transparent
+                opacity={0.88}
+                roughness={0.82}
+                metalness={0}
+                side={THREE.DoubleSide}
+                depthWrite={false}
+              />
+            </mesh>
+          )}
+        </group>
 
         {/* Atmosphere rim */}
         {planet.atmosphereOpacity > 0 && (
@@ -63,14 +110,6 @@ export default function PlanetMesh({ planet, onSelect, isSelected }: PlanetMeshP
             color={planet.atmosphereColor}
             opacity={planet.atmosphereOpacity}
           />
-        )}
-
-        {/* Saturn rings */}
-        {planet.hasRings && (
-          <mesh rotation={[Math.PI / 5, 0, 0]}>
-            <ringGeometry args={[planet.radius * 1.4, planet.radius * 2.4, 128]} />
-            <meshBasicMaterial color="#c9b89a" transparent opacity={0.75} side={THREE.DoubleSide} />
-          </mesh>
         )}
       </group>
     </>

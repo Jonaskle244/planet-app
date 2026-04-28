@@ -25,7 +25,7 @@ const fragmentShader = `
   varying vec3 vViewDir;
   void main() {
     float rim = 1.0 - max(0.0, dot(vNormal, vViewDir));
-    rim = pow(rim, 2.8);
+    rim = pow(rim, 2.35);
     gl_FragColor = vec4(uColor, rim * uOpacity);
   }
 `
@@ -45,13 +45,12 @@ export default function Atmosphere({ radius, color, opacity }: AtmosphereProps) 
         side: THREE.FrontSide,
         blending: THREE.AdditiveBlending,
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [color, opacity]
   )
 
   return (
     <mesh material={material}>
-      <sphereGeometry args={[radius * 1.15, 32, 32]} />
+      <sphereGeometry args={[radius * 1.12, 48, 48]} />
     </mesh>
   )
 }
