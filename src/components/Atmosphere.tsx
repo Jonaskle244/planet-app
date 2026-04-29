@@ -25,7 +25,7 @@ const fragmentShader = `
   varying vec3 vViewDir;
   void main() {
     float rim = 1.0 - max(0.0, dot(vNormal, vViewDir));
-    rim = pow(rim, 2.35);
+    rim = smoothstep(0.22, 1.0, pow(rim, 2.1));
     gl_FragColor = vec4(uColor, rim * uOpacity);
   }
 `
@@ -42,15 +42,15 @@ export default function Atmosphere({ radius, color, opacity }: AtmosphereProps) 
         },
         transparent: true,
         depthWrite: false,
-        side: THREE.FrontSide,
-        blending: THREE.AdditiveBlending,
+        side: THREE.BackSide,
+        blending: THREE.NormalBlending,
       }),
     [color, opacity]
   )
 
   return (
     <mesh material={material}>
-      <sphereGeometry args={[radius * 1.12, 48, 48]} />
+      <sphereGeometry args={[radius * 1.08, 48, 48]} />
     </mesh>
   )
 }

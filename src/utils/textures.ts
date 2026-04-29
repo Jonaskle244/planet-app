@@ -15,9 +15,12 @@ function makeCanvas(w: number, h: number): [HTMLCanvasElement, CanvasRenderingCo
   return [el, el.getContext('2d')!]
 }
 
-function finishTexture(canvas: HTMLCanvasElement): THREE.CanvasTexture {
+function finishTexture(
+  canvas: HTMLCanvasElement,
+  colorSpace: THREE.ColorSpace = THREE.SRGBColorSpace
+): THREE.CanvasTexture {
   const texture = new THREE.CanvasTexture(canvas)
-  texture.colorSpace = THREE.SRGBColorSpace
+  texture.colorSpace = colorSpace
   texture.wrapS = THREE.RepeatWrapping
   texture.wrapT = THREE.ClampToEdgeWrapping
   texture.anisotropy = 8
@@ -342,40 +345,136 @@ function neptune(): THREE.CanvasTexture {
 
 // --- Sun: granulation + sunspots ---
 export function createSunTexture(): THREE.CanvasTexture {
-  const [c, ctx] = makeCanvas(512, 256)
+  const [c, ctx] = makeCanvas(1024, 512)
   const rng = makeRng(0)
 
-  const base = ctx.createRadialGradient(256, 128, 0, 256, 128, 260)
-  base.addColorStop(0, '#ffe060')
-  base.addColorStop(0.5, '#fdb813')
-  base.addColorStop(1, '#d07000')
+  const base = ctx.createRadialGradient(512, 256, 0, 512, 256, 540)
+  base.addColorStop(0, '#fff6a8')
+  base.addColorStop(0.42, '#ffd45a')
+  base.addColorStop(0.72, '#f28a18')
+  base.addColorStop(1, '#b94800')
   ctx.fillStyle = base
-  ctx.fillRect(0, 0, 512, 256)
+  ctx.fillRect(0, 0, 1024, 512)
 
-  for (let i = 0; i < 80; i++) {
-    const x = rng() * 512, y = rng() * 256, r = 6 + rng() * 22
-    const br = Math.floor(220 + rng() * 35)
-    ctx.fillStyle = `rgba(255,${br},${Math.floor(rng() * 40)},0.13)`
-    ctx.beginPath()
-    ctx.ellipse(x, y, r, r * 0.8, rng() * Math.PI, 0, Math.PI * 2)
-    ctx.fill()
+  for (let y = 0; y < 512; y += 7) {
+    for (let x = 0; x < 1024; x += 7) {
+      const heat = 190 + Math.floor(rng() * 66)
+      const alpha = 0.08 + rng() * 0.12
+      ctx.fillStyle = `rgba(255,${heat},${Math.floor(18 + rng() * 58)},${alpha})`
+      ctx.beginPath()
+      ctx.ellipse(x + rng() * 8, y + rng() * 8, 3 + rng() * 5, 2 + rng() * 4, rng() * Math.PI, 0, Math.PI * 2)
+      ctx.fill()
+    }
   }
 
-  for (let i = 0; i < 4; i++) {
-    const x = 80 + rng() * 352, y = 50 + rng() * 156, r = 7 + rng() * 14
-    ctx.fillStyle = `rgba(160,70,0,0.45)`
+  for (let i = 0; i < 58; i++) {
+    const x = rng() * 1024, y = rng() * 512, rx = 28 + rng() * 105, ry = 5 + rng() * 16
+    ctx.strokeStyle = `rgba(255,225,95,${0.08 + rng() * 0.16})`
+    ctx.lineWidth = 2 + rng() * 5
+    ctx.beginPath()
+    ctx.ellipse(x, y, rx, ry, rng() * Math.PI, 0, Math.PI * 2)
+    ctx.stroke()
+  }
+
+  for (let i = 0; i < 10; i++) {
+    const x = 120 + rng() * 784, y = 70 + rng() * 372, r = 8 + rng() * 22
+    ctx.fillStyle = `rgba(90,36,0,${0.26 + rng() * 0.22})`
     ctx.beginPath()
     ctx.ellipse(x, y, r, r * 0.8, rng() * Math.PI, 0, Math.PI * 2)
     ctx.fill()
     const g = ctx.createRadialGradient(x, y, 0, x, y, r * 2)
-    g.addColorStop(0, 'rgba(200,100,0,0.0)')
-    g.addColorStop(0.4, 'rgba(200,100,0,0.08)')
+    g.addColorStop(0, 'rgba(70,26,0,0.16)')
+    g.addColorStop(0.42, 'rgba(210,88,0,0.1)')
     g.addColorStop(1, 'rgba(200,100,0,0)')
     ctx.fillStyle = g
     ctx.fillRect(x - r * 2, y - r * 2, r * 4, r * 4)
   }
 
   return finishTexture(c)
+}
+
+export function createEarthCloudTexture(): THREE.CanvasTexture {
+  const [c, ctx] = makeCanvas(1024, 512)
+  const rng = makeRng(31)
+
+  ctx.clearRect(0, 0, 1024, 512)
+
+  for (let band = 0; band < 12; band++) {
+    const yBase = 38 + band * 38 + rng() * 18
+    ctx.strokeStyle = `rgba(255,255,255,${0.1 + rng() * 0.12})`
+    ctx.lineWidth = 7 + rng() * 14
+    ctx.beginPath()
+    for (let x = -20; x <= 1044; x += 12) {
+      const y =
+        yBase +
+        Math.sin(x * 0.012 + band * 1.4) * (8 + rng() * 6) +
+        Math.sin(x * 0.032 + band) * 5
+      if (x === -20) ctx.moveTo(x, y)
+      else ctx.lineTo(x, y)
+    }
+    ctx.stroke()
+  }
+
+  for (let i = 0; i < 42; i++) {
+    const x = rng() * 1024, y = 24 + rng() * 464, r = 18 + rng() * 70
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r)
+    g.addColorStop(0, `rgba(255,255,255,${0.14 + rng() * 0.16})`)
+    g.addColorStop(0.58, `rgba(255,255,255,${0.06 + rng() * 0.08})`)
+    g.addColorStop(1, 'rgba(255,255,255,0)')
+    ctx.fillStyle = g
+    ctx.fillRect(x - r, y - r, r * 2, r * 2)
+  }
+
+  return finishTexture(c)
+}
+
+export function createPlanetReliefTexture(id: string): THREE.CanvasTexture {
+  const [c, ctx] = makeCanvas(512, 256)
+  const seedMap: Record<string, number> = {
+    mercury: 41,
+    venus: 42,
+    earth: 43,
+    mars: 44,
+    jupiter: 45,
+    saturn: 46,
+    uranus: 47,
+    neptune: 48,
+  }
+  const rng = makeRng(seedMap[id] ?? 41)
+
+  ctx.fillStyle = '#808080'
+  ctx.fillRect(0, 0, 512, 256)
+
+  if (id === 'jupiter' || id === 'saturn' || id === 'uranus' || id === 'neptune' || id === 'venus') {
+    for (let y = 0; y < 256; y += 5) {
+      const value = 120 + Math.sin(y * 0.08) * 18 + rng() * 22
+      ctx.fillStyle = `rgb(${value},${value},${value})`
+      ctx.fillRect(0, y, 512, 5)
+    }
+    return finishTexture(c, THREE.NoColorSpace)
+  }
+
+  for (let i = 0; i < 1600; i++) {
+    const v = 95 + rng() * 72
+    ctx.fillStyle = `rgba(${v},${v},${v},${0.11 + rng() * 0.13})`
+    ctx.fillRect(rng() * 512, rng() * 256, 1 + rng() * 3, 1 + rng() * 3)
+  }
+
+  const craterCount = id === 'earth' ? 18 : id === 'mars' ? 44 : 64
+  for (let i = 0; i < craterCount; i++) {
+    const x = rng() * 512, y = rng() * 256, r = 3 + rng() * (id === 'mercury' ? 19 : 12)
+    ctx.strokeStyle = `rgba(190,190,190,${0.22 + rng() * 0.22})`
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.ellipse(x, y, r, r * (0.65 + rng() * 0.35), rng() * Math.PI, 0, Math.PI * 2)
+    ctx.stroke()
+    ctx.fillStyle = `rgba(54,54,54,${0.08 + rng() * 0.12})`
+    ctx.beginPath()
+    ctx.ellipse(x + r * 0.2, y + r * 0.12, r * 0.72, r * 0.56, rng() * Math.PI, 0, Math.PI * 2)
+    ctx.fill()
+  }
+
+  return finishTexture(c, THREE.NoColorSpace)
 }
 
 export function createSaturnRingTexture(): THREE.CanvasTexture {

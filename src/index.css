@@ -11,9 +11,7 @@ body {
 }
 
 body {
-  background:
-    radial-gradient(circle at 48% 48%, rgba(255, 232, 164, 0.46) 0 11%, rgba(255, 232, 164, 0.18) 20%, transparent 38%),
-    linear-gradient(135deg, #f4f8fb 0%, #dce8f2 28%, #7d94ad 58%, #172133 100%);
+  background: #f4f8fb;
   color: #0f172a;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -32,6 +30,19 @@ button {
   font: inherit;
 }
 
+.app-shell {
+  background:
+    radial-gradient(circle at 48% 48%, rgba(255, 232, 164, 0.46) 0 11%, rgba(255, 232, 164, 0.18) 20%, transparent 38%),
+    linear-gradient(135deg, #f4f8fb 0%, #dce8f2 28%, #7d94ad 58%, #172133 100%);
+}
+
+.app-shell.view-dark {
+  background:
+    radial-gradient(circle at 48% 48%, rgba(255, 186, 89, 0.18) 0 9%, rgba(255, 186, 89, 0.08) 18%, transparent 36%),
+    radial-gradient(circle at 74% 22%, rgba(65, 91, 138, 0.24), transparent 34%),
+    linear-gradient(135deg, #030712 0%, #07111f 44%, #020617 100%);
+}
+
 .app-shell::before {
   content: "";
   position: absolute;
@@ -43,6 +54,13 @@ button {
   background-size: 72px 72px;
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.56), transparent 72%);
   z-index: 1;
+}
+
+.app-shell.view-dark::before {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.28), transparent 68%);
 }
 
 ::-webkit-scrollbar {
