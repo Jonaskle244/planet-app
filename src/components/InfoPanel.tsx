@@ -16,7 +16,7 @@ function getHeadlineStats(body: CelestialBodyData) {
   if (body.kind === 'moon') {
     return [
       { label: 'Typ', value: 'Mond' },
-      { label: 'Planet', value: 'Erde' },
+      { label: 'Planet', value: body.parentName },
     ]
   }
 
@@ -71,7 +71,11 @@ export default function InfoPanel({ body, onClose }: InfoPanelProps) {
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                {body.kind === 'star' ? 'Stern' : body.kind === 'moon' ? 'Mond' : 'Planet'}
+                {body.kind === 'star'
+                  ? 'Stern'
+                  : body.kind === 'moon'
+                    ? 'Mond'
+                    : 'Planet'}
               </p>
               <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">
                 {body.name}

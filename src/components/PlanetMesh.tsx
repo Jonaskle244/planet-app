@@ -2,8 +2,9 @@ import { useEffect, useMemo, useRef, type MutableRefObject } from 'react'
 import { useFrame, useLoader } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { Group, Mesh } from 'three'
-import type { CelestialBodyData, PlanetData } from '../data/planets'
+import { moonsByParentId, type CelestialBodyData, type PlanetData } from '../data/planets'
 import { getPlanetPosition, getPlanetRotationAngle, getRotationAngleForPeriod, planetOrbitConfigs } from '../data/orbits'
+import MoonMesh from './MoonMesh'
 import OrbitPath from './OrbitPath'
 import SaturnRings from './SaturnRings'
 import { createPlanetTexture } from '../utils/textures'
@@ -13,6 +14,7 @@ interface PlanetMeshProps {
   planet: PlanetData
   onSelect: (planet: CelestialBodyData) => void
   isSelected: boolean
+  selectedBodyId: string | null
   onBodyPositionChange: BodyPositionReporter
   simulationDateRef: MutableRefObject<Date>
 }
@@ -129,6 +131,7 @@ export default function PlanetMesh({
   planet,
   onSelect,
   isSelected,
+  selectedBodyId,
   onBodyPositionChange,
   simulationDateRef,
 }: PlanetMeshProps) {
@@ -140,6 +143,7 @@ export default function PlanetMesh({
   const axialTilt = useMemo(() => THREE.MathUtils.degToRad(planet.tilt), [planet.tilt])
   const hasPublicTexture = Boolean(textureUrlFor(planet.id))
   const isVenus = planet.id === 'venus'
+  const moons = moonsByParentId[planet.id] ?? []
   const orbitConfig = planetOrbitConfigs[planet.id]
 
   useFrame(() => {
@@ -215,6 +219,17 @@ export default function PlanetMesh({
           {/* Saturn rings */}
           {planet.hasRings && <SaturnRings radius={planet.radius} isSelected={isSelected} />}
         </group>
+
+        {moons.map((moon) => (
+            <MoonMesh
+              key={moon.id}
+              moon={moon}
+              onSelect={onSelect}
+              isSelected={selectedBodyId === moon.id}
+              onBodyPositionChange={onBodyPositionChange}
+              simulationDateRef={simulationDateRef}
+            />
+          ))}
       </group>
     </>
   )

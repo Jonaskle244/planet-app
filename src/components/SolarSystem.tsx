@@ -80,6 +80,7 @@ export default function SolarSystem({
             planet={planet}
             onSelect={onSelectBody}
             isSelected={planet.id === selectedBodyId}
+            selectedBodyId={selectedBodyId}
             onBodyPositionChange={onBodyPositionChange}
             simulationDateRef={simulationDateRef}
           />

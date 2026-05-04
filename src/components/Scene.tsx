@@ -15,6 +15,7 @@ const MIN_PLANET_DISTANCE_FLOOR = 0.9
 const MIN_SUN_DISTANCE_FACTOR = 3.35
 const MIN_SUN_DISTANCE_FLOOR = 8
 const FOCUS_RADIUS_BY_ID = Object.fromEntries(focusBodies.map((body) => [body.id, body.radius]))
+const FOCUS_KIND_BY_ID = Object.fromEntries(focusBodies.map((body) => [body.id, body.kind]))
 
 interface SceneProps {
   onSelectBody: (body: CelestialBodyData) => void
@@ -43,6 +44,10 @@ function minDistanceForFocus(selectedFocus: string) {
   return Math.max(radius * MIN_PLANET_DISTANCE_FACTOR, MIN_PLANET_DISTANCE_FLOOR)
 }
 
+function smoothingForFocus(selectedFocus: string) {
+  return FOCUS_KIND_BY_ID[selectedFocus] === 'moon' ? 2.2 : 5.2
+}
+
 function FocusControls({ bodyPositionsRef, selectedFocus, defaultTarget }: FocusControlsProps) {
   const controlsRef = useRef<OrbitControlsImpl>(null)
   const fallbackTarget = useMemo(() => new THREE.Vector3(...defaultTarget), [defaultTarget])
@@ -60,7 +65,7 @@ function FocusControls({ bodyPositionsRef, selectedFocus, defaultTarget }: Focus
     desiredTarget.copy(trackedTarget)
     previousTarget.copy(controls.target)
 
-    const smoothing = 1 - Math.exp(-delta * 5.2)
+    const smoothing = 1 - Math.exp(-delta * smoothingForFocus(selectedFocus))
     controls.target.lerp(desiredTarget, smoothing)
     targetDelta.subVectors(controls.target, previousTarget)
     camera.position.add(targetDelta)
