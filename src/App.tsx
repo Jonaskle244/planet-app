@@ -27,6 +27,9 @@ const releaseNotes = [
   'Ruhigere Planetenbewegung bei schneller Zeitsimulation.',
 ]
 
+// Verweildauer pro Stopp der automatischen Kamera-Tour.
+const TOUR_STOP_MS = 6500
+
 export default function App() {
   const initialUrlState = useMemo(() => readUrlState(), [])
   const [selected, setSelected] = useState<CelestialBodyData | null>(initialUrlState.body)
@@ -37,6 +40,8 @@ export default function App() {
   const [simulationDate, setSimulationDate] = useState(initialUrlState.date)
   const simulationDateRef = useRef(simulationDate)
   const [timeSpeedDaysPerSecond, setTimeSpeedDaysPerSecond] = useState(DEFAULT_SIMULATION_DAYS_PER_SECOND)
+  const [tourActive, setTourActive] = useState(false)
+  const tourIndexRef = useRef(0)
 
   // Zustand teilbar machen: Körper, Fokus, Ansicht und Datum (Tages-Granularität)
   // ohne History-Spam in die URL spiegeln.
@@ -74,11 +79,40 @@ export default function App() {
     setSimulationDate(today)
   }
 
-  // Körper anspringen: auswählen (Info-Panel) und zugleich in den Kamerafokus nehmen.
-  const handleJumpTo = useCallback((body: CelestialBodyData) => {
+  // Einen Reise-Stopp anfahren: Körper auswählen und in den Kamerafokus nehmen.
+  const goToStop = useCallback((index: number) => {
+    const body = solarBodies[index]
+    tourIndexRef.current = index
     setSelected(body)
     setSelectedFocus(body.id)
   }, [])
+
+  // Körper anspringen (Suchfeld): auswählen + fokussieren, beendet eine laufende Reise.
+  const handleJumpTo = useCallback((body: CelestialBodyData) => {
+    setTourActive(false)
+    setSelected(body)
+    setSelectedFocus(body.id)
+  }, [])
+
+  // Direkte Auswahl durch den Nutzer (3D-Klick, Planetenleiste): beendet die Reise.
+  const handleUserSelect = useCallback((body: CelestialBodyData) => {
+    setTourActive(false)
+    setSelected(body)
+  }, [])
+
+  const startTour = useCallback(() => {
+    setTourActive(true)
+    goToStop(0)
+  }, [goToStop])
+
+  // Automatische Kamera-Tour: schaltet im festen Takt durch Sonne + Planeten.
+  useEffect(() => {
+    if (!tourActive) return
+    const interval = window.setInterval(() => {
+      goToStop((tourIndexRef.current + 1) % solarBodies.length)
+    }, TOUR_STOP_MS)
+    return () => window.clearInterval(interval)
+  }, [tourActive, goToStop])
 
   return (
     <div
@@ -87,7 +121,7 @@ export default function App() {
       }`}
     >
       <Scene
-        onSelectBody={setSelected}
+        onSelectBody={handleUserSelect}
         selectedBodyId={selected?.id ?? null}
         isPaused={isPaused}
         selectedFocus={selectedFocus}
@@ -153,6 +187,21 @@ export default function App() {
               {isPaused ? 'Zeit starten' : 'Zeit pausieren'}
             </button>
 
+            <button
+              type="button"
+              aria-pressed={tourActive}
+              onClick={() => (tourActive ? setTourActive(false) : startTour())}
+              className={`rounded-md border px-3 py-2 text-xs font-semibold shadow-sm transition ${
+                tourActive
+                  ? 'border-amber-400 bg-amber-400 text-amber-950 hover:bg-amber-300'
+                  : isDarkMode
+                    ? 'border-slate-700 bg-slate-900/85 text-slate-100 hover:border-slate-500'
+                    : 'border-slate-200 bg-white/85 text-slate-700 hover:border-slate-300 hover:text-slate-950'
+              }`}
+            >
+              {tourActive ? 'Reise beenden' : 'Reise starten'}
+            </button>
+
             <div className="grid grid-cols-[1fr_auto] gap-2 sm:flex sm:items-end">
               <label className="flex min-w-0 flex-col gap-1 text-left">
                 <span className={`text-[0.64rem] font-semibold uppercase tracking-[0.18em] ${secondaryTextClass}`}>
@@ -190,7 +239,10 @@ export default function App() {
               </span>
               <select
                 value={selectedFocus}
-                onChange={(event) => setSelectedFocus(event.target.value)}
+                onChange={(event) => {
+                  setTourActive(false)
+                  setSelectedFocus(event.target.value)
+                }}
                 className={`max-w-full rounded-md border px-2 py-2 text-xs font-semibold shadow-sm outline-none transition ${controlClass}`}
               >
                 {focusBodyGroups.map((group) => (
@@ -269,7 +321,7 @@ export default function App() {
               <button
                 key={body.id}
                 type="button"
-                onClick={() => setSelected(body)}
+                onClick={() => handleUserSelect(body)}
                 className={`flex min-w-24 items-center gap-2 rounded-md border px-3 py-2 text-left transition ${
                   isActive
                     ? 'border-amber-300 bg-amber-50 text-slate-950 shadow-sm'
