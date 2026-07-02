@@ -1,8 +1,20 @@
 import type { CelestialBodyData } from '../data/planets'
+import BodyPreview from './BodyPreview'
 
 interface InfoPanelProps {
   body: CelestialBodyData | null
   onClose: () => void
+}
+
+const EARTH_DIAMETER_KM = 12742
+
+// Zieht den Durchmesser in km aus den Fakten ("Durchmesser: 12.742 km").
+function parseDiameterKm(body: CelestialBodyData): number | null {
+  const fact = body.facts.find((entry) => /durchmesser/i.test(entry))
+  const match = fact?.match(/([\d.]+)\s*km/)
+  if (!match) return null
+  const value = Number(match[1].replace(/\./g, ''))
+  return Number.isFinite(value) && value > 0 ? value : null
 }
 
 function getHeadlineStats(body: CelestialBodyData) {
@@ -54,6 +66,11 @@ export default function InfoPanel({ body, onClose }: InfoPanelProps) {
   const modelStats = body ? getModelStats(body) : []
   const profileStats = body ? getProfileStats(body) : []
 
+  const diameterKm = body?.kind === 'planet' ? parseDiameterKm(body) : null
+  const sizeRatio = diameterKm ? diameterKm / EARTH_DIAMETER_KM : null
+  const earthCirclePx = 26
+  const bodyCirclePx = sizeRatio ? Math.max(8, Math.min(72, earthCirclePx * sizeRatio)) : 0
+
   return (
     <div
       className={`absolute right-0 top-0 z-30 h-full w-full overflow-y-auto border-l border-white/70 bg-white/90 text-slate-950 shadow-2xl shadow-slate-950/20 backdrop-blur-2xl transition-transform duration-300 ease-in-out sm:w-96 ${
@@ -92,19 +109,7 @@ export default function InfoPanel({ body, onClose }: InfoPanelProps) {
           </div>
 
           <div className="flex items-center gap-4 border-y border-slate-200/80 py-5">
-            <div
-              className="h-20 w-20 shrink-0 rounded-full shadow-lg ring-1 ring-white"
-              style={{
-                background:
-                  body.kind === 'star'
-                    ? `radial-gradient(circle at 36% 32%, #fff7bd 0, ${body.color} 36%, #b34200 92%)`
-                    : `radial-gradient(circle at 30% 28%, #ffffffd6 0, ${body.color} 32%, #142033 118%)`,
-                boxShadow:
-                  body.kind === 'star'
-                    ? `0 0 36px -10px ${body.color}, inset -12px -16px 26px rgba(126, 42, 0, 0.3)`
-                    : `inset -16px -18px 28px rgba(15, 23, 42, 0.34), 0 18px 48px -22px ${body.color}`,
-              }}
-            />
+            <BodyPreview body={body} size={80} />
             <div className="grid flex-1 grid-cols-2 gap-3">
               {headlineStats.map((item) => (
                 <div key={item.label}>
@@ -118,6 +123,33 @@ export default function InfoPanel({ body, onClose }: InfoPanelProps) {
           </div>
 
           <p className="text-sm leading-6 text-slate-700">{body.description}</p>
+
+          {sizeRatio && (
+            <div className="rounded-md border border-slate-200/80 bg-white/55 p-4">
+              <div className="flex items-center justify-between text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <span>Größe im Vergleich</span>
+                <span className="text-slate-950">
+                  {sizeRatio >= 10 ? sizeRatio.toFixed(0) : sizeRatio.toFixed(2)}× Erde
+                </span>
+              </div>
+              <div className="mt-3 flex items-end gap-6">
+                <div className="flex flex-col items-center gap-1.5">
+                  <span
+                    className="rounded-full bg-sky-500/85 ring-1 ring-white"
+                    style={{ width: earthCirclePx, height: earthCirclePx }}
+                  />
+                  <span className="text-[0.6rem] font-medium text-slate-500">Erde</span>
+                </div>
+                <div className="flex flex-col items-center gap-1.5">
+                  <span
+                    className="rounded-full ring-1 ring-white"
+                    style={{ width: bodyCirclePx, height: bodyCirclePx, backgroundColor: body.color }}
+                  />
+                  <span className="text-[0.6rem] font-medium text-slate-500">{body.name}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-3 gap-2">
             {modelStats.map((item) => (
