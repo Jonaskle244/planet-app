@@ -144,15 +144,28 @@ export default function Scene({
       <pointLight position={SUN_POSITION} intensity={58} distance={420} decay={1.08} color="#fff0b8" />
       <directionalLight position={[-28, 34, 38]} intensity={0.025} color="#d9efff" />
 
+      {/* Ferne, dichte Grundschicht — trägt den Sternenhintergrund. */}
       <Stars
-        radius={280}
-        depth={80}
-        count={isDarkMode ? 2600 : 900}
-        factor={isDarkMode ? 2.05 : 1.15}
-        saturation={isDarkMode ? 0.06 : 0.18}
+        radius={300}
+        depth={90}
+        count={isDarkMode ? 5200 : 1100}
+        factor={isDarkMode ? 2.4 : 1.2}
+        saturation={isDarkMode ? 0.08 : 0.18}
         fade
         speed={isPaused ? 0 : 0.08}
       />
+      {/* Nähere, hellere Schicht für Tiefe und mehr Leuchtkraft (nur dunkler Modus). */}
+      {isDarkMode && (
+        <Stars
+          radius={185}
+          depth={55}
+          count={900}
+          factor={4.2}
+          saturation={0.14}
+          fade
+          speed={isPaused ? 0 : 0.05}
+        />
+      )}
 
       <FocusControls
         bodyPositionsRef={bodyPositionsRef}

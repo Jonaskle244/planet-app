@@ -39,8 +39,9 @@ button {
 .app-shell.view-dark {
   background:
     radial-gradient(circle at 48% 48%, rgba(255, 186, 89, 0.18) 0 9%, rgba(255, 186, 89, 0.08) 18%, transparent 36%),
-    radial-gradient(circle at 74% 22%, rgba(65, 91, 138, 0.24), transparent 34%),
-    linear-gradient(135deg, #030712 0%, #07111f 44%, #020617 100%);
+    radial-gradient(circle at 74% 22%, rgba(76, 106, 158, 0.3), transparent 38%),
+    radial-gradient(circle at 20% 78%, rgba(96, 72, 148, 0.2), transparent 40%),
+    linear-gradient(135deg, #061024 0%, #0a1830 46%, #050a1c 100%);
 }
 
 .app-shell::before {
