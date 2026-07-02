@@ -5,6 +5,7 @@ import BodySearch from './components/BodySearch'
 import { focusBodies, focusBodyGroups, solarBodies, type CelestialBodyData } from './data/planets'
 import { DEFAULT_SIMULATION_DAYS_PER_SECOND, REALTIME_DAYS_PER_SECOND } from './data/orbits'
 import { formatUrlDate, readUrlState, writeUrlState, type ViewMode } from './utils/urlState'
+import { releases } from './data/releaseNotes'
 
 const timeSpeedOptions = [
   { label: 'Echtzeit', value: REALTIME_DAYS_PER_SECOND },
@@ -13,18 +14,6 @@ const timeSpeedOptions = [
   { label: '1 Tag / Sek.', value: 1 },
   { label: '10 Tage / Sek.', value: 10 },
   { label: '30 Tage / Sek.', value: 30 },
-]
-
-const releaseNotes = [
-  'Dunkler Weltraum-Modus als Standard, heller Modus bleibt umschaltbar.',
-  'Realistischere Planeten mit Texturen, Schattenseiten und besserem Licht.',
-  'Erde mit Tag/Nacht-Seite, sichtbaren Wolken und dezenter Atmosphäre.',
-  'Pause, Fokus-Auswahl und näherer Zoom für bequemere Erkundung.',
-  'Zeitsteuerung mit Datum, Heute-Button und feineren Simulationsgeschwindigkeiten.',
-  'Astronomisch plausiblere Planetenpositionen auf Basis von J2000-Orbitdaten.',
-  'Umlaufbahnen als flache Ekliptik-Scheibe mit realistischen kleinen Neigungen.',
-  'Mond der Erde mit eigener Textur, Umlaufbahn, Rotation, Schattenseite und Fokus-Option.',
-  'Ruhigere Planetenbewegung bei schneller Zeitsimulation.',
 ]
 
 // Verweildauer pro Stopp der automatischen Kamera-Tour.
@@ -37,6 +26,7 @@ export default function App() {
   const [selectedFocus, setSelectedFocus] = useState(initialUrlState.focus)
   const [viewMode, setViewMode] = useState<ViewMode>(initialUrlState.view)
   const [releaseNotesOpen, setReleaseNotesOpen] = useState(false)
+  const [releaseIndex, setReleaseIndex] = useState(0)
   const [simulationDate, setSimulationDate] = useState(initialUrlState.date)
   const simulationDateRef = useRef(simulationDate)
   const [timeSpeedDaysPerSecond, setTimeSpeedDaysPerSecond] = useState(DEFAULT_SIMULATION_DAYS_PER_SECOND)
@@ -72,6 +62,18 @@ export default function App() {
     month: '2-digit',
     year: 'numeric',
   }).format(simulationDate)
+
+  const currentRelease = releases[releaseIndex]
+  const formattedReleaseDate = new Intl.DateTimeFormat('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(`${currentRelease.date}T12:00:00`))
+  const pagerButtonClass = `flex h-6 w-6 items-center justify-center rounded-md border text-sm font-semibold leading-none transition disabled:cursor-not-allowed disabled:opacity-40 ${
+    isDarkMode
+      ? 'border-slate-700 bg-slate-900/80 text-slate-200 hover:border-slate-500'
+      : 'border-slate-200 bg-white/80 text-slate-700 hover:border-slate-300'
+  }`
 
   const handleTodayClick = () => {
     const today = new Date()
@@ -283,7 +285,7 @@ export default function App() {
               Release Notes
             </span>
             <span className={`${releaseNotesOpen ? 'block' : 'hidden'} mt-1 text-sm font-semibold sm:block`}>
-              Neu in dieser Version
+              Versionsverlauf
             </span>
           </span>
           <span
@@ -297,14 +299,47 @@ export default function App() {
         </button>
 
         {releaseNotesOpen && (
-          <ul className={`mt-3 space-y-2 text-xs leading-5 ${releaseTextClass}`}>
-            {releaseNotes.map((note) => (
-              <li key={note} className="flex gap-2">
-                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" aria-hidden="true" />
-                <span>{note}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">
+                  Version {currentRelease.version} · {currentRelease.title}
+                </p>
+                <p className={`mt-0.5 text-[0.62rem] font-medium uppercase tracking-[0.16em] ${secondaryTextClass}`}>
+                  {formattedReleaseDate} · {releaseIndex + 1} / {releases.length}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  aria-label="Ältere Version"
+                  onClick={() => setReleaseIndex((current) => Math.min(current + 1, releases.length - 1))}
+                  disabled={releaseIndex >= releases.length - 1}
+                  className={pagerButtonClass}
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  aria-label="Neuere Version"
+                  onClick={() => setReleaseIndex((current) => Math.max(current - 1, 0))}
+                  disabled={releaseIndex <= 0}
+                  className={pagerButtonClass}
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+
+            <ul className={`mt-3 space-y-2 text-xs leading-5 ${releaseTextClass}`}>
+              {currentRelease.notes.map((note) => (
+                <li key={note} className="flex gap-2">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" aria-hidden="true" />
+                  <span>{note}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </aside>
 
