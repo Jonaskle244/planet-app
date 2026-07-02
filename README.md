@@ -1,73 +1,37 @@
-# React + TypeScript + Vite
+# Sonnensystem 3D
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Ein interaktives 3D-Modell des Sonnensystems im Browser — die Sonne, alle acht Planeten und 18 ihrer wichtigsten Monde, frei erkundbar. Die Himmelskörper bewegen sich auf astronomisch plausiblen J2000-Bahnen; per Zeitsteuerung lässt sich die Simulation beschleunigen, pausieren oder auf ein beliebiges Datum setzen.
 
-Currently, two official plugins are available:
+Gebaut mit React, TypeScript und Three.js (react-three-fiber).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- **Sonne, 8 Planeten und 18 Monde** — Textur-Kugeln und detaillierte NASA-GLB-Modelle
+- **Echte Bahnmechanik** — Positionen aus J2000-Keplerelementen statt fiktiver Kreise
+- **Zeitsteuerung** — Datum wählen, Echtzeit bis 30 Tage/Sekunde, Pause, „Heute"-Sprung
+- **Fokus-Kamera** — folgt weich dem gewählten Himmelskörper
+- **Erde im Detail** — Tag/Nacht-Grenze, Wolkenschicht, Atmosphäre
+- **Heller & dunkler Modus** und Info-Panels zu jedem Körper
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Entwicklung
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install      # Abhängigkeiten installieren
+npm run dev      # Dev-Server (http://localhost:5173)
+npm run build    # TypeScript-Check + Production-Build
+npm run lint     # ESLint
+npm run preview  # Production-Build lokal ansehen
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Stack
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Vite · React 19 · TypeScript · Three.js · @react-three/fiber + drei + postprocessing · Tailwind CSS v4 · Deployment auf Vercel.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Projektstruktur
+
+Details zur Architektur stehen in [`CLAUDE.md`](./CLAUDE.md). Kurz:
+
+- `src/data/planets.ts` — alle Himmelskörper-Daten (einzige Quelle der Wahrheit)
+- `src/data/orbits.ts` — Keplerelemente und Bahn-Mathematik
+- `src/components/` — die 3D-Szene (R3F) und das HTML-Info-Overlay
+- `public/planet/` — Texturen und 3D-Modelle der Körper
