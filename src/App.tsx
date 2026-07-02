@@ -1,10 +1,9 @@
-import { useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Scene from './components/Scene'
 import InfoPanel from './components/InfoPanel'
 import { focusBodyGroups, solarBodies, type CelestialBodyData } from './data/planets'
 import { DEFAULT_SIMULATION_DAYS_PER_SECOND, REALTIME_DAYS_PER_SECOND } from './data/orbits'
-
-type ViewMode = 'light' | 'dark'
+import { formatUrlDate, readUrlState, writeUrlState, type ViewMode } from './utils/urlState'
 
 const timeSpeedOptions = [
   { label: 'Echtzeit', value: REALTIME_DAYS_PER_SECOND },
@@ -28,14 +27,27 @@ const releaseNotes = [
 ]
 
 export default function App() {
-  const [selected, setSelected] = useState<CelestialBodyData | null>(null)
+  const initialUrlState = useMemo(() => readUrlState(), [])
+  const [selected, setSelected] = useState<CelestialBodyData | null>(initialUrlState.body)
   const [isPaused, setIsPaused] = useState(false)
-  const [selectedFocus, setSelectedFocus] = useState('sun')
-  const [viewMode, setViewMode] = useState<ViewMode>('dark')
+  const [selectedFocus, setSelectedFocus] = useState(initialUrlState.focus)
+  const [viewMode, setViewMode] = useState<ViewMode>(initialUrlState.view)
   const [releaseNotesOpen, setReleaseNotesOpen] = useState(false)
-  const [simulationDate, setSimulationDate] = useState(() => new Date())
+  const [simulationDate, setSimulationDate] = useState(initialUrlState.date)
   const simulationDateRef = useRef(simulationDate)
   const [timeSpeedDaysPerSecond, setTimeSpeedDaysPerSecond] = useState(DEFAULT_SIMULATION_DAYS_PER_SECOND)
+
+  // Zustand teilbar machen: Körper, Fokus, Ansicht und Datum (Tages-Granularität)
+  // ohne History-Spam in die URL spiegeln.
+  const simulationDay = formatUrlDate(simulationDate)
+  useEffect(() => {
+    writeUrlState({
+      bodyId: selected?.id ?? null,
+      focus: selectedFocus,
+      view: viewMode,
+      dateString: simulationDay,
+    })
+  }, [selected, selectedFocus, viewMode, simulationDay])
 
   const isDarkMode = viewMode === 'dark'
   const panelClass = isDarkMode
