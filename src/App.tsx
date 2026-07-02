@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Scene from './components/Scene'
 import InfoPanel from './components/InfoPanel'
-import { focusBodyGroups, solarBodies, type CelestialBodyData } from './data/planets'
+import BodySearch from './components/BodySearch'
+import { focusBodies, focusBodyGroups, solarBodies, type CelestialBodyData } from './data/planets'
 import { DEFAULT_SIMULATION_DAYS_PER_SECOND, REALTIME_DAYS_PER_SECOND } from './data/orbits'
 import { formatUrlDate, readUrlState, writeUrlState, type ViewMode } from './utils/urlState'
 
@@ -73,6 +74,12 @@ export default function App() {
     setSimulationDate(today)
   }
 
+  // Körper anspringen: auswählen (Info-Panel) und zugleich in den Kamerafokus nehmen.
+  const handleJumpTo = useCallback((body: CelestialBodyData) => {
+    setSelected(body)
+    setSelectedFocus(body.id)
+  }, [])
+
   return (
     <div
       className={`app-shell view-${viewMode} relative h-full w-full overflow-hidden transition-colors duration-500 ${
@@ -90,6 +97,15 @@ export default function App() {
         onSimulationDateChange={setSimulationDate}
       />
       <InfoPanel body={selected} onClose={() => setSelected(null)} />
+
+      <div className="pointer-events-none absolute left-1/2 top-4 z-30 hidden -translate-x-1/2 sm:top-6 lg:block">
+        <BodySearch
+          bodies={focusBodies}
+          selectedId={selected?.id ?? null}
+          onJump={handleJumpTo}
+          isDarkMode={isDarkMode}
+        />
+      </div>
 
       <header className="pointer-events-none absolute left-4 right-4 top-4 z-20 flex items-start justify-between gap-4 sm:left-6 sm:right-6 sm:top-6">
         <div className={`pointer-events-auto rounded-lg border px-4 py-3 shadow-xl backdrop-blur-xl ${panelClass}`}>
